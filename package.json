@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "postinstall": "husky && npx ts-patch install",
+    "postinstall": "husky && npx ts-patch install && npx patch-package",
     "setup": "npx rimraf node_modules package-lock.json dist tmp yarn.lock && npm install",
     "start": "nps",
     "add": "nx g @nativescript/plugin-tools:add-package",
@@ -34,13 +34,15 @@
     "@ngtools/webpack": "^19.0.0",
     "husky": "~9.0.0",
     "ng-packagr": "^19.0.0",
+    "patch-package": "^8.0.1",
     "rxjs": "~7.8.0",
     "sass": "1.53.0",
     "typescript": "~5.6.0",
     "zone.js": "~0.15.0"
   },
   "overrides": {
-    "sass": "1.53.0"
+    "sass": "1.53.0",
+    "yargs": "^17.7.2"
   },
   "lint-staged": {
     "**/*.{js,ts,scss,json,html}": [

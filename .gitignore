@@ -44,3 +44,4 @@ packages/**/angular/dist
 
 .nx/cache
 .nx/workspace-data
+package-lock.json
