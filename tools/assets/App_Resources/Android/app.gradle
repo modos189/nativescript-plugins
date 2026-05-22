@@ -1,15 +1,13 @@
-// Add additional native dependencies here, for example:
-
-// dependencies {
-//   implementation 'com.google.android.gms:play-services-location:+'
-// }
+dependencies {
+  implementation "org.mozilla.geckoview:geckoview:149.0.20260403140140"
+}
 
 android {
-  compileSdkVersion 34
-  buildToolsVersion "34"
+  compileSdkVersion 36
+  buildToolsVersion "36"
   defaultConfig {
-    minSdkVersion 24
-    targetSdkVersion 34
+    minSdkVersion 26
+    targetSdkVersion 36
     generatedDensities = []
   }
   aaptOptions {

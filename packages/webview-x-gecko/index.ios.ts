@@ -1,3 +1,4 @@
-import { WebviewXGeckoCommon } from './common';
+export * from '@nativescript-community/ui-webview/index.ios';
+import { AWebView } from '@nativescript-community/ui-webview/index.ios';
 
-export class WebviewXGecko extends WebviewXGeckoCommon {}
+export class WebviewX extends AWebView {}

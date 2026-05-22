@@ -1,0 +1,14 @@
+// this configurations is loaded before building plugins, as well as before building
+// the app - this is where you can apply global settings and overrides
+
+project.ext {
+  // androidXAppCompat = "1.4.1"
+  // useKotlin = true
+  // kotlinVersion = "1.6.0"
+}
+
+project.rootProject.allprojects {
+  repositories {
+    maven { url "https://maven.mozilla.org/maven2/" }
+  }
+}
