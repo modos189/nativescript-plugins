@@ -13,7 +13,8 @@
     "sync-packages-with-demos": "nx g @nativescript/plugin-tools:sync-packages-with-demos",
     "remove-package": "nx g @nativescript/plugin-tools:remove-package",
     "add-demo": "nx g @nativescript/plugin-tools:add-demo",
-    "check-demo-parity": "node tools/scripts/check-webview-demo-parity.js"
+    "check-demo-parity": "node tools/scripts/check-webview-demo-parity.js",
+    "generate-readme": "node tools/scripts/generate-readme.js"
   },
   "private": true,
   "devDependencies": {
