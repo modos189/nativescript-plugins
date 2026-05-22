@@ -1,6 +1,6 @@
 <Page
   xmlns="http://schemas.nativescript.org/tns.xsd"
-  xmlns:wv="@modos189/webview-x"
+  xmlns:wv="@modos189/nativescript-webview-x"
   navigatingTo="navigatingTo"
   class="page"
 >

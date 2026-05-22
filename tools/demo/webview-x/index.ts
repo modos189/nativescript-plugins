@@ -1,4 +1,4 @@
-import {} from '@modos189/webview-x';
+import {} from '@modos189/nativescript-webview-x';
 import { Observable } from '@nativescript/core';
 
 const DEFAULT_URL = 'https://www.google.com';

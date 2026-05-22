@@ -43,18 +43,18 @@ module.exports = {
     // packages
     // build output is always in dist/packages
     '@modos189': {
-      // @modos189/webview-x
+      // @modos189/nativescript-webview-x
       'webview-x': {
         build: {
           script: 'nx run webview-x:build.all',
-          description: '@modos189/webview-x: Build',
+          description: '@modos189/nativescript-webview-x: Build',
         },
       },
-      // @modos189/webview-x-gecko
+      // @modos189/nativescript-webview-x-gecko
       'webview-x-gecko': {
         build: {
           script: 'nx run webview-x-gecko:build.all',
-          description: '@modos189/webview-x-gecko: Build',
+          description: '@modos189/nativescript-webview-x-gecko: Build',
         },
       },
       'build-all': {
@@ -69,11 +69,11 @@ module.exports = {
     focus: {
       'webview-x': {
         script: 'nx run webview-x:focus',
-        description: 'Focus on @modos189/webview-x',
+        description: 'Focus on @modos189/nativescript-webview-x',
       },
       'webview-x-gecko': {
         script: 'nx run webview-x-gecko:focus',
-        description: 'Focus on @modos189/webview-x-gecko',
+        description: 'Focus on @modos189/nativescript-webview-x-gecko',
       },
       reset: {
         script: 'nx g @nativescript/plugin-tools:focus-packages',

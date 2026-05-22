@@ -22,8 +22,8 @@
     "paths": {
       "@demo/shared": ["tools/demo/index.ts"],
       "@modos189/*": ["packages/*"],
-      "@modos189/webview-x": ["packages/webview-x/index.d.ts"],
-      "@modos189/webview-x-gecko": ["packages/webview-x-gecko/index.d.ts"]
+      "@modos189/nativescript-webview-x": ["packages/webview-x/index.d.ts"],
+      "@modos189/nativescript-webview-x-gecko": ["packages/webview-x-gecko/index.d.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

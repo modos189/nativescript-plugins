@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Generates README.md for both webview plugins from a single source of truth.
 //
-// "Implemented" = available in BOTH @modos189/webview-x AND @modos189/webview-x-gecko.
+// "Implemented" = available in BOTH @modos189/nativescript-webview-x AND @modos189/nativescript-webview-x-gecko.
 // "API Reference" = full upstream API from @nativescript-community/ui-webview (informational).
 //
 // Usage: node tools/scripts/generate-readme.js
@@ -91,7 +91,7 @@ function eventsTable(rows) {
 function implementedSection(data) {
   return `## Implemented
 
-_Available in both \`@modos189/webview-x\` and \`@modos189/webview-x-gecko\`._
+_Available in both \`@modos189/nativescript-webview-x\` and \`@modos189/nativescript-webview-x-gecko\`._
 
 ### Properties
 
@@ -125,18 +125,18 @@ ${BRIDGE_SNIPPET}`;
 // ─── Plugin-specific README templates ────────────────────────────────────────
 
 function readmeWebViewX() {
-  return `# @modos189/webview-x
+  return `# @modos189/nativescript-webview-x
 
 A NativeScript WebView plugin wrapping the Android system WebView and iOS WKWebView.
 Built on top of [\`@nativescript-community/ui-webview\`](https://github.com/nativescript-community/ui-webview) — \`WebViewX\` extends \`AWebView\` directly, so the full upstream API is available.
 
-Both \`@modos189/webview-x\` and \`@modos189/webview-x-gecko\` export an identically named \`WebViewX\` class.
+Both \`@modos189/nativescript-webview-x\` and \`@modos189/nativescript-webview-x-gecko\` export an identically named \`WebViewX\` class.
 Swap the engine by changing only the import path.
 
 ## Installation
 
 \`\`\`bash
-npm install @modos189/webview-x
+npm install @modos189/nativescript-webview-x
 \`\`\`
 
 ## Usage
@@ -145,7 +145,7 @@ npm install @modos189/webview-x
 
 \`\`\`xml
 <Page xmlns="http://schemas.nativescript.org/tns.xsd"
-      xmlns:wv="@modos189/webview-x">
+      xmlns:wv="@modos189/nativescript-webview-x">
   <GridLayout rows="auto, *">
     <TextField row="0" hint="Enter URL" text="{{ url }}" returnPress="{{ onNavigate }}" />
     <wv:WebViewX row="1" src="{{ src }}" />
@@ -156,7 +156,7 @@ npm install @modos189/webview-x
 ### TypeScript
 
 \`\`\`typescript
-import { WebViewX } from '@modos189/webview-x';
+import { WebViewX } from '@modos189/nativescript-webview-x';
 
 const webview = new WebViewX();
 webview.loadUrl('https://example.com');
@@ -176,18 +176,18 @@ Apache License Version 2.0
 }
 
 function readmeWebViewXGecko() {
-  return `# @modos189/webview-x-gecko
+  return `# @modos189/nativescript-webview-x-gecko
 
 A NativeScript WebView plugin using **GeckoView** (Mozilla's Gecko engine) on Android and WKWebView on iOS.
-Exports the same \`WebViewX\` class as [\`@modos189/webview-x\`](../webview-x/README.md) — swap the engine by changing only the import path.
+Exports the same \`WebViewX\` class as [\`@modos189/nativescript-webview-x\`](../webview-x/README.md) — swap the engine by changing only the import path.
 
 > **iOS note:** App Store guidelines prohibit custom browser engines on iOS.
-> The iOS implementation falls back to WKWebView (identical to \`@modos189/webview-x\`).
+> The iOS implementation falls back to WKWebView (identical to \`@modos189/nativescript-webview-x\`).
 
 ## Installation
 
 \`\`\`bash
-npm install @modos189/webview-x-gecko
+npm install @modos189/nativescript-webview-x-gecko
 \`\`\`
 
 The GeckoView Maven repository and AAR dependency are added to your Android project automatically on install.
@@ -199,7 +199,7 @@ The GeckoView Maven repository and AAR dependency are added to your Android proj
 
 \`\`\`xml
 <Page xmlns="http://schemas.nativescript.org/tns.xsd"
-      xmlns:wv="@modos189/webview-x-gecko">
+      xmlns:wv="@modos189/nativescript-webview-x-gecko">
   <GridLayout rows="auto, *">
     <TextField row="0" hint="Enter URL" text="{{ url }}" returnPress="{{ onNavigate }}" />
     <wv:WebViewX row="1" src="{{ src }}" />
@@ -208,17 +208,17 @@ The GeckoView Maven repository and AAR dependency are added to your Android proj
 \`\`\`
 
 \`\`\`typescript
-import { WebViewX } from '@modos189/webview-x-gecko';
+import { WebViewX } from '@modos189/nativescript-webview-x-gecko';
 
 const webview = new WebViewX();
 webview.src = 'https://example.com';
 \`\`\`
 
-To switch from \`@modos189/webview-x\`, change only the import — no other code changes needed.
+To switch from \`@modos189/nativescript-webview-x\`, change only the import — no other code changes needed.
 
 ${implementedSection(IMPLEMENTED)}
 
-${apiReferenceSection(API_REFERENCE, 'Target API matching `@modos189/webview-x`. Items not listed under **Implemented** above are not yet available on Android (iOS uses WKWebView and has the full API). Refer to the [upstream docs](https://github.com/nativescript-community/ui-webview) for details.')}
+${apiReferenceSection(API_REFERENCE, 'Target API matching `@modos189/nativescript-webview-x`. Items not listed under **Implemented** above are not yet available on Android (iOS uses WKWebView and has the full API). Refer to the [upstream docs](https://github.com/nativescript-community/ui-webview) for details.')}
 
 ## License
 
