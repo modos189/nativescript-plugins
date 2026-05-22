@@ -50,6 +50,13 @@ module.exports = {
           description: '@modos189/webview-x: Build',
         },
       },
+      // @modos189/webview-x-gecko
+      'webview-x-gecko': {
+        build: {
+          script: 'nx run webview-x-gecko:build.all',
+          description: '@modos189/webview-x-gecko: Build',
+        },
+      },
       'build-all': {
         script: 'nx run-many --target=build.all --all',
         description: 'Build all packages',
@@ -63,6 +70,10 @@ module.exports = {
       'webview-x': {
         script: 'nx run webview-x:focus',
         description: 'Focus on @modos189/webview-x',
+      },
+      'webview-x-gecko': {
+        script: 'nx run webview-x-gecko:focus',
+        description: 'Focus on @modos189/webview-x-gecko',
       },
       reset: {
         script: 'nx g @nativescript/plugin-tools:focus-packages',

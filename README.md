@@ -1,11 +1,5 @@
-# @modos189/\* plugins
-
-```
-npm run setup
-npm start
-```
-
 - [@modos189/webview-x](packages/webview-x/README.md)
+- [@modos189/webview-x-gecko](packages/webview-x-gecko/README.md)
 
 # How to use?
 

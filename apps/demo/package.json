@@ -6,7 +6,8 @@
   "dependencies": {
     "@nativescript/core": "*",
     "@modos189/webview-x": "file:../../packages/webview-x",
-    "@nativescript-community/ui-webview": "^1.6.0"
+    "@nativescript-community/ui-webview": "^1.6.0",
+    "@modos189/webview-x-gecko": "file:../../packages/webview-x-gecko"
   },
   "devDependencies": {
     "@nativescript/android": "~9.0.0",
