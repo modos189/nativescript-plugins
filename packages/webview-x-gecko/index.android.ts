@@ -1,4 +1,4 @@
-import { Application, View, Property } from '@nativescript/core';
+import { Application, View, Property, booleanConverter } from '@nativescript/core';
 
 let geckoRuntime: org.mozilla.geckoview.GeckoRuntime | null = null;
 
@@ -9,16 +9,23 @@ function getRuntime(): org.mozilla.geckoview.GeckoRuntime {
   return geckoRuntime;
 }
 
-// Explicit type annotation required to break circular inference with [srcProperty.setNative]
+// Explicit type annotation required to break circular inference with [xProperty.setNative]
 export const srcProperty: Property<WebViewX, string> = new Property<WebViewX, string>({
   name: 'src',
   defaultValue: '',
+});
+
+export const debugModeProperty: Property<WebViewX, boolean> = new Property<WebViewX, boolean>({
+  name: 'debugMode',
+  defaultValue: false,
+  valueConverter: booleanConverter,
 });
 
 export class WebViewX extends View {
   nativeViewProtected!: org.mozilla.geckoview.GeckoView;
   private _session: org.mozilla.geckoview.GeckoSession | null = null;
   src!: string;
+  debugMode!: boolean;
 
   createNativeView(): org.mozilla.geckoview.GeckoView {
     const runtime = getRuntime();
@@ -43,6 +50,11 @@ export class WebViewX extends View {
       this._session.loadUri(value);
     }
   }
+
+  [debugModeProperty.setNative](value: boolean): void {
+    getRuntime().getSettings().setRemoteDebuggingEnabled(!!value);
+  }
 }
 
 srcProperty.register(WebViewX);
+debugModeProperty.register(WebViewX);

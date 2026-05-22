@@ -9,6 +9,7 @@ declare namespace org {
         setJavaScriptEnabled(enabled: boolean): void;
         setWebManifestEnabled(enabled: boolean): void;
         setConsoleOutputEnabled(enabled: boolean): void;
+        setRemoteDebuggingEnabled(enabled: boolean): void;
       }
       class GeckoSession {
         constructor();

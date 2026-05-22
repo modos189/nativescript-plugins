@@ -21,6 +21,7 @@
     <wv:WebViewX
       row="1"
       src="{{ src }}"
+      debugMode="true"
     />
   </GridLayout>
 </Page>

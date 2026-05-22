@@ -48,6 +48,7 @@ _Available in both `@modos189/nativescript-webview-x` and `@modos189/nativescrip
 | Property | Type | Description |
 | --- | --- | --- |
 | `src` | `string` | URL to load (data-binding supported) |
+| `debugMode` | `boolean` | Enable remote WebView debugging |
 
 ### Methods
 

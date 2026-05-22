@@ -12,7 +12,10 @@ const path = require('path');
 // ─── Single source of truth ──────────────────────────────────────────────────
 
 const IMPLEMENTED = {
-  properties: [{ name: 'src', type: 'string', desc: 'URL to load (data-binding supported)' }],
+  properties: [
+    { name: 'src', type: 'string', desc: 'URL to load (data-binding supported)' },
+    { name: 'debugMode', type: 'boolean', desc: 'Enable remote WebView debugging' },
+  ],
   methods: [],
   events: [],
 };
