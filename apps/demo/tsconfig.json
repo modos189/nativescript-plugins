@@ -6,7 +6,8 @@
     "paths": {
       "~/*": ["src/*"],
       "@demo/shared": ["../../tools/demo/index.ts"],
-      "@modos189/*": ["../../packages/*"]
+      "@modos189/*": ["../../packages/*"],
+      "@modos189/webview-x": ["../../packages/webview-x/index.d.ts"]
     }
   }
 }

@@ -1,0 +1,65 @@
+{
+  "name": "webview-x",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/webview-x",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "dist/packages/webview-x",
+        "tsConfig": "packages/webview-x/tsconfig.json",
+        "packageJson": "packages/webview-x/package.json",
+        "main": "packages/webview-x/index.d.ts",
+        "assets": [
+          "packages/webview-x/*.md",
+          "packages/webview-x/index.d.ts",
+          "LICENSE",
+          {
+            "glob": "**/*",
+            "input": "packages/webview-x/platforms/",
+            "output": "./platforms/"
+          }
+        ],
+        "dependsOn": [
+          {
+            "target": "build.all",
+            "projects": "dependencies"
+          }
+        ]
+      }
+    },
+    "build.all": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["node tools/scripts/build-finish.ts webview-x"],
+        "parallel": false
+      },
+      "outputs": ["{workspaceRoot}/dist/packages/webview-x"],
+      "dependsOn": [
+        {
+          "target": "build.all",
+          "projects": "dependencies"
+        },
+        {
+          "target": "build",
+          "projects": "self"
+        }
+      ]
+    },
+    "focus": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["nx g @nativescript/plugin-tools:focus-packages webview-x"],
+        "parallel": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:eslint",
+      "options": {
+        "lintFilePatterns": ["packages/webview-x/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

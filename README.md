@@ -5,7 +5,7 @@ npm run setup
 npm start
 ```
 
-- @modos189
+- [@modos189/webview-x](packages/webview-x/README.md)
 
 # How to use?
 

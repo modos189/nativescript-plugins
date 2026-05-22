@@ -43,6 +43,13 @@ module.exports = {
     // packages
     // build output is always in dist/packages
     '@modos189': {
+      // @modos189/webview-x
+      'webview-x': {
+        build: {
+          script: 'nx run webview-x:build.all',
+          description: '@modos189/webview-x: Build',
+        },
+      },
       'build-all': {
         script: 'nx run-many --target=build.all --all',
         description: 'Build all packages',
@@ -53,6 +60,10 @@ module.exports = {
       description: '_____________  Focus (VS Code supported)  _____________',
     },
     focus: {
+      'webview-x': {
+        script: 'nx run webview-x:focus',
+        description: 'Focus on @modos189/webview-x',
+      },
       reset: {
         script: 'nx g @nativescript/plugin-tools:focus-packages',
         description: 'Reset Focus',
