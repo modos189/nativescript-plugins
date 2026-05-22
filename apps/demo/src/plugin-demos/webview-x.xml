@@ -21,8 +21,6 @@
     <wv:WebviewX
       row="1"
       src="{{ src }}"
-      domStorage="true"
-      autoInjectJSBridge="false"
     />
   </GridLayout>
 </Page>

@@ -1,1 +1,2 @@
 npx lint-staged --allow-empty
+node tools/scripts/check-webview-demo-parity.js
