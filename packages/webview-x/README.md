@@ -2,9 +2,9 @@
 # @modos189/webview-x
 
 A NativeScript WebView plugin wrapping the Android system WebView and iOS WKWebView.
-Built on top of [`@nativescript-community/ui-webview`](https://github.com/nativescript-community/ui-webview) — `WebviewX` extends `AWebView` directly, so the full upstream API is available.
+Built on top of [`@nativescript-community/ui-webview`](https://github.com/nativescript-community/ui-webview) — `WebViewX` extends `AWebView` directly, so the full upstream API is available.
 
-Both `@modos189/webview-x` and `@modos189/webview-x-gecko` export an identically named `WebviewX` class.
+Both `@modos189/webview-x` and `@modos189/webview-x-gecko` export an identically named `WebViewX` class.
 Swap the engine by changing only the import path.
 
 ## Installation
@@ -22,7 +22,7 @@ npm install @modos189/webview-x
       xmlns:wv="@modos189/webview-x">
   <GridLayout rows="auto, *">
     <TextField row="0" hint="Enter URL" text="{{ url }}" returnPress="{{ onNavigate }}" />
-    <wv:WebviewX row="1" src="{{ src }}" />
+    <wv:WebViewX row="1" src="{{ src }}" />
   </GridLayout>
 </Page>
 ```
@@ -30,9 +30,9 @@ npm install @modos189/webview-x
 ### TypeScript
 
 ```typescript
-import { WebviewX } from '@modos189/webview-x';
+import { WebViewX } from '@modos189/webview-x';
 
-const webview = new WebviewX();
+const webview = new WebViewX();
 webview.loadUrl('https://example.com');
 webview.on('loadFinished', () => {
   webview.executeJavaScript('document.title');
@@ -60,7 +60,7 @@ _None implemented yet._
 
 ## API Reference
 
-Full API inherited from `@nativescript-community/ui-webview`. All items are available — `WebviewX` extends `AWebView` directly.
+Full API inherited from `@nativescript-community/ui-webview`. All items are available — `WebViewX` extends `AWebView` directly.
 
 ### Properties
 

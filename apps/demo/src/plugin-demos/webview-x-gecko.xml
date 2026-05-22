@@ -18,7 +18,7 @@
       />
       <Button col="1" text="Go" tap="{{ onNavigate }}" class="btn btn-primary m-l-8" />
     </GridLayout>
-    <wv:WebviewX
+    <wv:WebViewX
       row="1"
       src="{{ src }}"
     />

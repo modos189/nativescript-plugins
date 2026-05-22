@@ -10,12 +10,12 @@ function getRuntime(): org.mozilla.geckoview.GeckoRuntime {
 }
 
 // Explicit type annotation required to break circular inference with [srcProperty.setNative]
-export const srcProperty: Property<WebviewX, string> = new Property<WebviewX, string>({
+export const srcProperty: Property<WebViewX, string> = new Property<WebViewX, string>({
   name: 'src',
   defaultValue: '',
 });
 
-export class WebviewX extends View {
+export class WebViewX extends View {
   nativeViewProtected!: org.mozilla.geckoview.GeckoView;
   private _session: org.mozilla.geckoview.GeckoSession | null = null;
   src!: string;
@@ -45,4 +45,4 @@ export class WebviewX extends View {
   }
 }
 
-srcProperty.register(WebviewX);
+srcProperty.register(WebViewX);

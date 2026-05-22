@@ -1,8 +1,8 @@
 import { View } from '@nativescript/core';
 import { Property } from '@nativescript/core';
 
-export declare const srcProperty: Property<WebviewX, string>;
+export declare const srcProperty: Property<WebViewX, string>;
 
-export declare class WebviewX extends View {
+export declare class WebViewX extends View {
   src: string;
 }

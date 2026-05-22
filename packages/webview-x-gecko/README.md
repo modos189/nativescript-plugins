@@ -2,7 +2,7 @@
 # @modos189/webview-x-gecko
 
 A NativeScript WebView plugin using **GeckoView** (Mozilla's Gecko engine) on Android and WKWebView on iOS.
-Exports the same `WebviewX` class as [`@modos189/webview-x`](../webview-x/README.md) — swap the engine by changing only the import path.
+Exports the same `WebViewX` class as [`@modos189/webview-x`](../webview-x/README.md) — swap the engine by changing only the import path.
 
 > **iOS note:** App Store guidelines prohibit custom browser engines on iOS.
 > The iOS implementation falls back to WKWebView (identical to `@modos189/webview-x`).
@@ -25,15 +25,15 @@ The GeckoView Maven repository and AAR dependency are added to your Android proj
       xmlns:wv="@modos189/webview-x-gecko">
   <GridLayout rows="auto, *">
     <TextField row="0" hint="Enter URL" text="{{ url }}" returnPress="{{ onNavigate }}" />
-    <wv:WebviewX row="1" src="{{ src }}" />
+    <wv:WebViewX row="1" src="{{ src }}" />
   </GridLayout>
 </Page>
 ```
 
 ```typescript
-import { WebviewX } from '@modos189/webview-x-gecko';
+import { WebViewX } from '@modos189/webview-x-gecko';
 
-const webview = new WebviewX();
+const webview = new WebViewX();
 webview.src = 'https://example.com';
 ```
 
