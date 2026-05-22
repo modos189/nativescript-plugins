@@ -1,0 +1,9 @@
+project.rootProject.allprojects {
+    repositories {
+        maven { url "https://maven.mozilla.org/maven2/" }
+    }
+}
+
+dependencies {
+    implementation "org.mozilla.geckoview:geckoview:149.0.20260403140140"
+}

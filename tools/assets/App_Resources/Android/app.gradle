@@ -1,7 +1,3 @@
-dependencies {
-  implementation "org.mozilla.geckoview:geckoview:149.0.20260403140140"
-}
-
 android {
   compileSdkVersion 36
   buildToolsVersion "36"
