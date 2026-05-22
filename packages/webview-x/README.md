@@ -49,6 +49,7 @@ _Available in both `@modos189/nativescript-webview-x` and `@modos189/nativescrip
 | --- | --- | --- |
 | `src` | `string` | URL to load (data-binding supported) |
 | `debugMode` | `boolean` | Enable remote WebView debugging |
+| `supportPopups` | `boolean` | Open `window.open()` / `target="_blank"` links in a native popup. Default: `true` |
 
 ### Methods
 

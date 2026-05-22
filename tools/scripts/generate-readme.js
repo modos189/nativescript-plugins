@@ -15,6 +15,7 @@ const IMPLEMENTED = {
   properties: [
     { name: 'src', type: 'string', desc: 'URL to load (data-binding supported)' },
     { name: 'debugMode', type: 'boolean', desc: 'Enable remote WebView debugging' },
+    { name: 'supportPopups', type: 'boolean', desc: 'Open `window.open()` / `target="_blank"` links in a native popup. Default: `true`' },
   ],
   methods: [],
   events: [],

@@ -28,3 +28,16 @@ declare namespace org {
     }
   }
 }
+
+declare namespace com {
+  namespace modos189 {
+    namespace webviewxgecko {
+      class GeckoPopupHelper {
+        constructor(session: org.mozilla.geckoview.GeckoSession, context: android.content.Context, supportPopups: boolean);
+        static getRuntime(context: android.content.Context): org.mozilla.geckoview.GeckoRuntime;
+        static setRemoteDebuggingEnabled(enabled: boolean): void;
+        setSupportPopups(value: boolean): void;
+      }
+    }
+  }
+}
