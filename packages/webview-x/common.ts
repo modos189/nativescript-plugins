@@ -1,3 +1,1 @@
-import { Observable } from '@nativescript/core';
-
-export class WebviewXCommon extends Observable {}
+export { WebViewExtBase as WebviewXCommon } from '@nativescript-community/ui-webview';

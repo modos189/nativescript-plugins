@@ -1,3 +1,4 @@
-import { WebviewXCommon } from './common';
+export * from '@nativescript-community/ui-webview';
+import { AWebView } from '@nativescript-community/ui-webview';
 
-export declare class WebviewX extends WebviewXCommon {}
+export declare class WebviewX extends AWebView {}

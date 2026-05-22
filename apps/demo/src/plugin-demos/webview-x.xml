@@ -1,14 +1,28 @@
-<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="navigatingTo" class="page">
-    <Page.actionBar>
-        <ActionBar title="webview-x" icon="" class="action-bar">
-        </ActionBar>
-    </Page.actionBar>
-    <StackLayout class="p-20">
-        <ScrollView class="h-full">
-          <StackLayout>
-            <Button text="Test webview-x" tap="{{ testIt }}" class="btn btn-primary"/>
-
-          </StackLayout>
-        </ScrollView>
-    </StackLayout>
+<Page
+  xmlns="http://schemas.nativescript.org/tns.xsd"
+  xmlns:wv="@modos189/webview-x"
+  navigatingTo="navigatingTo"
+  class="page"
+>
+  <GridLayout rows="auto, *">
+    <GridLayout row="0" columns="*, auto" class="p-8">
+      <TextField
+        col="0"
+        hint="Enter URL"
+        text="{{ url }}"
+        returnKeyType="go"
+        keyboardType="url"
+        autocorrect="false"
+        returnPress="{{ onNavigate }}"
+        class="input"
+      />
+      <Button col="1" text="Go" tap="{{ onNavigate }}" class="btn btn-primary m-l-8" />
+    </GridLayout>
+    <wv:WebviewX
+      row="1"
+      src="{{ src }}"
+      domStorage="true"
+      autoInjectJSBridge="false"
+    />
+  </GridLayout>
 </Page>
