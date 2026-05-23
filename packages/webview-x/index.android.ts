@@ -2,7 +2,10 @@ export * from '@nativescript-community/ui-webview/index.android';
 import { AWebView, supportPopupsProperty } from '@nativescript-community/ui-webview/index.android';
 
 export class WebViewX extends AWebView {
+  static userAgentTransform: ((defaultUA: string | null) => string | null) | null = null;
+
   private _popupClient: com.modos189.webviewx.PopupWebChromeClient | null = null;
+  private _userAgentOverride: string | null = null;
 
   initNativeView(): void {
     super.initNativeView();
@@ -10,8 +13,16 @@ export class WebViewX extends AWebView {
     const nv = this.nativeViewProtected;
     if (!nv) return;
 
-    // AndroidWebView doesn't re-declare all android.webkit.WebView methods in its typings
     const wv = nv as unknown as android.webkit.WebView;
+
+    if (WebViewX.userAgentTransform) {
+      const defaultUA = android.webkit.WebSettings.getDefaultUserAgent(this._context);
+      const newUA = WebViewX.userAgentTransform(defaultUA);
+      if (newUA !== null) {
+        wv.getSettings().setUserAgentString(newUA);
+        this._userAgentOverride = newUA;
+      }
+    }
 
     const existing = wv.getWebChromeClient();
     // this._context is the Activity context — view.getContext() is unreliable in NativeScript
@@ -27,6 +38,20 @@ export class WebViewX extends AWebView {
   disposeNativeView(): void {
     this._popupClient = null;
     super.disposeNativeView();
+  }
+
+  getUserAgentOverride(): string | null {
+    return this._userAgentOverride;
+  }
+
+  setUserAgentOverride(ua: string | null): void {
+    this._userAgentOverride = ua || null;
+    const wv = this.nativeViewProtected as unknown as android.webkit.WebView;
+    if (wv) wv.getSettings().setUserAgentString(this._userAgentOverride);
+  }
+
+  getDefaultUserAgent(): string {
+    return android.webkit.WebSettings.getDefaultUserAgent(this._context);
   }
 
   [supportPopupsProperty.setNative](value: boolean): void {

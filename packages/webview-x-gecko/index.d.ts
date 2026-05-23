@@ -6,7 +6,10 @@ export declare const debugModeProperty: Property<WebViewX, boolean>;
 export declare const supportPopupsProperty: Property<WebViewX, boolean>;
 
 export declare class WebViewX extends View {
+  static userAgentTransform: ((defaultUA: string | null) => string | null) | null;
   src: string;
   debugMode: boolean;
   supportPopups: boolean;
+  getUserAgentOverride(): string | null;
+  setUserAgentOverride(ua: string | null): void;
 }

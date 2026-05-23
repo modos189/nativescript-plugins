@@ -12,12 +12,22 @@ const path = require('path');
 // ─── Single source of truth ──────────────────────────────────────────────────
 
 const IMPLEMENTED = {
+  statics: [
+    {
+      name: 'userAgentTransform',
+      type: '((defaultUA: string \\| null) => string \\| null) \\| null',
+      desc: 'Set once at app startup before any `WebViewX` is created. Applied automatically during native view initialization, before the first URL loads. `defaultUA` is the platform default UA string on Android system WebView, `null` on iOS/GeckoView (unavailable synchronously). Return the desired UA string, or `null` to leave the platform default unchanged.',
+    },
+  ],
   properties: [
     { name: 'src', type: 'string', desc: 'URL to load (data-binding supported)' },
     { name: 'debugMode', type: 'boolean', desc: 'Enable remote WebView debugging' },
     { name: 'supportPopups', type: 'boolean', desc: 'Open `window.open()` / `target="_blank"` links in a native popup. Default: `true`' },
   ],
-  methods: [],
+  methods: [
+    { name: 'getUserAgentOverride()', returns: 'string \\| null', desc: 'Return the active UA override, or `null` if none is set (platform default is used)' },
+    { name: 'setUserAgentOverride(ua: string \\| null)', returns: 'void', desc: 'Set a custom UA string for this instance; pass `null` or empty string to clear the override and restore the platform default. Applies to subsequent navigations' },
+  ],
   events: [],
 };
 
@@ -71,6 +81,13 @@ window.nsWebViewBridge.on('nativeEvent', (data) => { });  // ← NativeScript
 
 // ─── Markdown helpers ─────────────────────────────────────────────────────────
 
+function staticsTable(rows) {
+  if (!rows.length) return '_None._\n';
+  const lines = ['| Static property | Type | Description |', '| --- | --- | --- |'];
+  for (const r of rows) lines.push(`| \`${r.name}\` | \`${r.type}\` | ${r.desc} |`);
+  return lines.join('\n') + '\n';
+}
+
 function propsTable(rows) {
   if (!rows.length) return '_None implemented yet._\n';
   const lines = ['| Property | Type | Description |', '| --- | --- | --- |'];
@@ -92,17 +109,21 @@ function eventsTable(rows) {
   return lines.join('\n') + '\n';
 }
 
-function implementedSection(data) {
+function implementedSection(data, extraMethods = []) {
+  const allMethods = [...data.methods, ...extraMethods];
   return `## Implemented
 
 _Available in both \`@modos189/nativescript-webview-x\` and \`@modos189/nativescript-webview-x-gecko\`._
 
+### Static properties
+
+${staticsTable(data.statics)}
 ### Properties
 
 ${propsTable(data.properties)}
 ### Methods
 
-${methodsTable(data.methods)}
+${methodsTable(allMethods)}
 ### Events
 
 ${eventsTable(data.events)}`;
@@ -169,7 +190,7 @@ webview.on('loadFinished', () => {
 });
 \`\`\`
 
-${implementedSection(IMPLEMENTED)}
+${implementedSection(IMPLEMENTED, [{ name: 'getDefaultUserAgent()', returns: 'string', desc: '**Android only.** Return the system default UA string for this device, unaffected by any override. Useful as the input to `userAgentTransform`' }])}
 
 ${apiReferenceSection(API_REFERENCE, 'Full API inherited from `@nativescript-community/ui-webview`. All items are available — `WebViewX` extends `AWebView` directly.')}
 

@@ -70,6 +70,7 @@ public class PopupWebChromeClient extends WebChromeClient {
         WebSettings settings = popupWebView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+        settings.setUserAgentString(view.getSettings().getUserAgentString());
 
         // Wire the new WebView into the system's popup transport before showing UI.
         WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;

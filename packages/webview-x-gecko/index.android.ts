@@ -19,6 +19,8 @@ export const supportPopupsProperty: Property<WebViewX, boolean> = new Property<W
 });
 
 export class WebViewX extends View {
+  static userAgentTransform: ((defaultUA: string | null) => string | null) | null = null;
+
   nativeViewProtected!: org.mozilla.geckoview.GeckoView;
   private _session: org.mozilla.geckoview.GeckoSession | null = null;
   private _popupHelper: com.modos189.webviewxgecko.GeckoPopupHelper | null = null;
@@ -29,6 +31,14 @@ export class WebViewX extends View {
   createNativeView(): org.mozilla.geckoview.GeckoView {
     const runtime = com.modos189.webviewxgecko.GeckoPopupHelper.getRuntime(Application.android.context);
     const session = new org.mozilla.geckoview.GeckoSession();
+
+    if (WebViewX.userAgentTransform) {
+      const newUA = WebViewX.userAgentTransform(null);
+      if (newUA !== null) {
+        (session as any).getSettings().setUserAgentOverride(newUA);
+      }
+    }
+
     // GeckoPopupHelper sets the NavigationDelegate and manages popup windows.
     // this._context is the Activity context — required for Dialog creation.
     this._popupHelper = new com.modos189.webviewxgecko.GeckoPopupHelper(session, this._context, true);
@@ -56,6 +66,14 @@ export class WebViewX extends View {
 
   [debugModeProperty.setNative](value: boolean): void {
     com.modos189.webviewxgecko.GeckoPopupHelper.setRemoteDebuggingEnabled(!!value);
+  }
+
+  getUserAgentOverride(): string | null {
+    return (this._session as any)?.getSettings().getUserAgentOverride() ?? null;
+  }
+
+  setUserAgentOverride(ua: string | null): void {
+    (this._session as any)?.getSettings().setUserAgentOverride(ua || null);
   }
 
   [supportPopupsProperty.setNative](value: boolean): void {
