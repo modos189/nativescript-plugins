@@ -66,7 +66,9 @@ _Available in both `@modos189/nativescript-webview-x` and `@modos189/nativescrip
 
 ### Events
 
-_None implemented yet._
+| Event | Description |
+| --- | --- |
+| `popupNavigate` | Android: fired on each navigation inside a popup; set `args.cancel = true` to intercept and dismiss the popup (e.g. capture OAuth redirect). `args.url` contains the target URL. |
 
 
 ## API Reference

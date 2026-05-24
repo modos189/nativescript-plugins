@@ -28,7 +28,7 @@ const IMPLEMENTED = {
     { name: 'getUserAgentOverride()', returns: 'string \\| null', desc: 'Return the active UA override, or `null` if none is set (platform default is used)' },
     { name: 'setUserAgentOverride(ua: string \\| null)', returns: 'void', desc: 'Set a custom UA string for this instance; pass `null` or empty string to clear the override and restore the platform default. Applies to subsequent navigations' },
   ],
-  events: [],
+  events: [{ name: 'popupNavigate', desc: 'Android: fired on each navigation inside a popup; set `args.cancel = true` to intercept and dismiss the popup (e.g. capture OAuth redirect). `args.url` contains the target URL.' }],
 };
 
 const API_REFERENCE = {

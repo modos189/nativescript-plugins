@@ -37,6 +37,13 @@ declare namespace com {
         static getRuntime(context: android.content.Context): org.mozilla.geckoview.GeckoRuntime;
         static setRemoteDebuggingEnabled(enabled: boolean): void;
         setSupportPopups(value: boolean): void;
+        setUrlInterceptor(interceptor: GeckoPopupHelper.PopupUrlInterceptor): void;
+      }
+      namespace GeckoPopupHelper {
+        class PopupUrlInterceptor {
+          constructor(implementation: { shouldHandleExternally(url: string): boolean });
+          shouldHandleExternally(url: string): boolean;
+        }
       }
     }
   }

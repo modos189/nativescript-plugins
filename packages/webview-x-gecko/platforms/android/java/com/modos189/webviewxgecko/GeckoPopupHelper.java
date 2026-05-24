@@ -1,23 +1,29 @@
 package com.modos189.webviewxgecko;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import java.lang.ref.WeakReference;
 import java.net.URLDecoder;
 import org.mozilla.geckoview.AllowOrDeny;
@@ -29,21 +35,32 @@ import org.mozilla.geckoview.GeckoView;
 
 /**
  * Manages GeckoRuntime singleton and handles popup windows (window.open) natively
- * via a BottomSheetDialog — no JS bridge involvement in the popup flow.
+ * via a slide-up Dialog — no JS bridge involvement in the popup flow.
  */
 public class GeckoPopupHelper {
+
+    /** Callback so the host app can intercept popup navigations (e.g. OAuth redirects). */
+    public interface PopupUrlInterceptor {
+        /** Return true to intercept: the popup is dismissed and the URL is passed to the host. */
+        boolean shouldHandleExternally(String url);
+    }
 
     private static GeckoRuntime sRuntime;
 
     private final GeckoSession session;
     private final WeakReference<Context> contextRef;
     private volatile boolean supportPopups;
+    private PopupUrlInterceptor urlInterceptor;
 
     public GeckoPopupHelper(GeckoSession session, Context context, boolean supportPopups) {
         this.session = session;
         this.contextRef = new WeakReference<>(context);
         this.supportPopups = supportPopups;
         setupNavigationDelegate();
+    }
+
+    public void setUrlInterceptor(PopupUrlInterceptor interceptor) {
+        this.urlInterceptor = interceptor;
     }
 
     public static GeckoRuntime getRuntime(Context context) {
@@ -79,11 +96,11 @@ public class GeckoPopupHelper {
                 if (!supportPopups) return null;
 
                 final GeckoSession popup = new GeckoSession();
-                // Gecko opens the session on its own thread; show the sheet on main thread
+                final PopupUrlInterceptor interceptor = GeckoPopupHelper.this.urlInterceptor;
                 mainHandler.post(new Runnable() {
                     public void run() {
                         Context ctx = contextRef.get();
-                        if (ctx != null) showPopupSheet(ctx, popup, parent, uri);
+                        if (ctx != null) showPopupDialog(ctx, popup, parent, uri, interceptor);
                     }
                 });
                 return GeckoResult.fromValue(popup);
@@ -99,109 +116,283 @@ public class GeckoPopupHelper {
         return null;
     }
 
-    private static void showPopupSheet(
+    private static void showPopupDialog(
             Context context,
             final GeckoSession popupSession,
             final GeckoSession mainSession,
-            String uri) {
+            String uri,
+            final PopupUrlInterceptor urlInterceptor) {
 
-        Activity activity = getActivity(context);
+        final Activity activity = getActivity(context);
         if (activity == null) return;
 
         final float dp = activity.getResources().getDisplayMetrics().density;
         final int toolbarH = (int) (48 * dp);
         final int padH = (int) (20 * dp);
+        android.graphics.Rect initFrame = new android.graphics.Rect();
+        activity.getWindow().getDecorView().getWindowVisibleDisplayFrame(initFrame);
+        final int[] sheetH = {initFrame.height() - toolbarH / 2};
 
-        String host = "loading...";
-        try {
-            String h = new java.net.URI(uri).getHost();
-            if (h != null && !h.isEmpty()) host = h;
-        } catch (Exception ignored) {
-        }
-
-        final BottomSheetDialog dialog = new BottomSheetDialog(activity);
-
-        LinearLayout content = new LinearLayout(activity);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setLayoutParams(new ViewGroup.LayoutParams(
+        // Dim overlay on the Activity decor view
+        final ViewGroup activityDecor = (ViewGroup) activity.getWindow().getDecorView();
+        final View dimView = new View(activity);
+        dimView.setBackgroundColor(Color.argb(102, 0, 0, 0));
+        dimView.setAlpha(0f);
+        activityDecor.addView(dimView, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        dimView.animate().alpha(1f).setDuration(350).start();
 
-        LinearLayout toolbar = new LinearLayout(activity);
+        final Dialog dialog = new Dialog(activity);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        final int touchSlop = ViewConfiguration.get(activity).getScaledTouchSlop();
+        final float[] dragStartRawY = {0f};
+        final float[] interceptDownY = {0f};
+        final VelocityTracker[] vt = {null};
+        // Set after content is built; safe because it's only invoked after dialog.show().
+        final Runnable[] doAnimatedDismiss = {null};
+
+        // Sheet root — recalculates height on rotation
+        final LinearLayout content = new LinearLayout(activity) {
+            @Override
+            protected void onMeasure(int widthSpec, int heightSpec) {
+                // Query the dialog's own window frame; the activity window frame would
+                // not reflect keyboard insets inside a separate dialog window.
+                android.graphics.Rect fr = new android.graphics.Rect();
+                getWindowVisibleDisplayFrame(fr);
+                if (fr.height() > 0) sheetH[0] = fr.height() - toolbarH / 2;
+                super.onMeasure(widthSpec,
+                        MeasureSpec.makeMeasureSpec(sheetH[0], MeasureSpec.EXACTLY));
+            }
+        };
+        content.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable sheetBg = new GradientDrawable();
+        sheetBg.setColor(Color.parseColor("#222222"));
+        float cornerR = 16 * dp;
+        sheetBg.setCornerRadii(new float[]{cornerR, cornerR, cornerR, cornerR, 0, 0, 0, 0});
+        content.setBackground(sheetBg);
+
+        // Toolbar — drag downward to dismiss
+        final LinearLayout toolbar = new LinearLayout(activity) {
+            private float downY;
+            private boolean dragging;
+
+            @Override
+            public boolean onInterceptTouchEvent(MotionEvent ev) {
+                switch (ev.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        downY = ev.getRawY(); dragging = false; break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (!dragging && ev.getRawY() - downY > touchSlop) {
+                            dragging = true;
+                            dragStartRawY[0] = ev.getRawY();
+                            if (vt[0] != null) vt[0].recycle();
+                            vt[0] = VelocityTracker.obtain();
+                            vt[0].addMovement(ev);
+                            content.animate().cancel();
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP: case MotionEvent.ACTION_CANCEL:
+                        dragging = false; break;
+                }
+                return dragging;
+            }
+
+            @Override
+            public boolean onTouchEvent(MotionEvent ev) {
+                switch (ev.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        downY = ev.getRawY(); dragging = false; return true;
+                    case MotionEvent.ACTION_MOVE:
+                        if (!dragging) {
+                            if (ev.getRawY() - downY > touchSlop) {
+                                dragging = true;
+                                dragStartRawY[0] = ev.getRawY();
+                                if (vt[0] != null) vt[0].recycle();
+                                vt[0] = VelocityTracker.obtain();
+                                vt[0].addMovement(ev);
+                                content.animate().cancel();
+                            }
+                            return true;
+                        }
+                        float delta = ev.getRawY() - dragStartRawY[0];
+                        if (delta > 0) content.setTranslationY(delta);
+                        if (vt[0] != null) vt[0].addMovement(ev);
+                        return true;
+                    case MotionEvent.ACTION_UP: case MotionEvent.ACTION_CANCEL:
+                        if (dragging) {
+                            dragging = false;
+                            float totalDelta = ev.getRawY() - dragStartRawY[0];
+                            float yVelocity = 0;
+                            if (vt[0] != null) {
+                                vt[0].addMovement(ev);
+                                vt[0].computeCurrentVelocity(1000);
+                                yVelocity = vt[0].getYVelocity();
+                                vt[0].recycle();
+                                vt[0] = null;
+                            }
+                            if (totalDelta > sheetH[0] * 0.3f || yVelocity > 1000)
+                                doAnimatedDismiss[0].run();
+                            else
+                                content.animate().translationY(0).setDuration(200).start();
+                        }
+                        return true;
+                }
+                return false;
+            }
+        };
         toolbar.setOrientation(LinearLayout.HORIZONTAL);
         toolbar.setGravity(Gravity.CENTER_VERTICAL);
-        float r = 16 * dp;
-        GradientDrawable toolbarBg = new GradientDrawable();
-        toolbarBg.setColor(Color.parseColor("#222222"));
-        toolbarBg.setCornerRadii(new float[]{r, r, r, r, 0, 0, 0, 0});
-        toolbar.setBackground(toolbarBg);
         content.addView(toolbar, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, toolbarH));
 
-        TextView titleView = new TextView(activity);
-        titleView.setText(host);
+        final TextView titleView = new TextView(activity);
+        String initialHost = "loading...";
+        try {
+            String h = new java.net.URI(uri).getHost();
+            if (h != null && !h.isEmpty()) initialHost = h;
+        } catch (Exception ignored) {}
+        titleView.setText(initialHost);
         titleView.setTextColor(Color.WHITE);
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         titleView.setIncludeFontPadding(false);
-        titleView.setTranslationY(-0.5f * dp);
         titleView.setPadding(padH, 0, 0, 0);
         toolbar.addView(titleView, new LinearLayout.LayoutParams(
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-        Button closeBtn = new Button(activity);
+        final Button closeBtn = new Button(activity);
         closeBtn.setText("✕");
         closeBtn.setTextColor(Color.WHITE);
         closeBtn.setBackgroundColor(Color.TRANSPARENT);
         closeBtn.setMinWidth(0);
         closeBtn.setMinimumWidth(0);
-        closeBtn.setGravity(android.view.Gravity.CENTER);
-        closeBtn.setTranslationY(-0.5f * dp);
+        closeBtn.setGravity(Gravity.CENTER);
         closeBtn.setPadding(padH / 2, 0, padH, 0);
         toolbar.addView(closeBtn, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT));
 
-        GeckoView geckoView = new GeckoView(activity);
-        content.addView(geckoView, new LinearLayout.LayoutParams(
+        // GeckoView wrapper — intercepts downward swipe when scrolled to top
+        final GeckoView geckoView = new GeckoView(activity);
+        FrameLayout geckoWrapper = new FrameLayout(activity) {
+            private boolean intercepting;
+
+            @Override
+            public boolean onInterceptTouchEvent(MotionEvent ev) {
+                switch (ev.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        interceptDownY[0] = ev.getRawY(); intercepting = false; break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (!intercepting) {
+                            float dy = ev.getRawY() - interceptDownY[0];
+                            if (dy > touchSlop && geckoView.getScrollY() == 0) {
+                                intercepting = true;
+                                dragStartRawY[0] = ev.getRawY();
+                                if (vt[0] != null) vt[0].recycle();
+                                vt[0] = VelocityTracker.obtain();
+                                vt[0].addMovement(ev);
+                                content.animate().cancel();
+                            }
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP: case MotionEvent.ACTION_CANCEL:
+                        intercepting = false; break;
+                }
+                return intercepting;
+            }
+
+            @Override
+            public boolean onTouchEvent(MotionEvent ev) {
+                if (!intercepting) return false;
+                switch (ev.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        float delta = ev.getRawY() - dragStartRawY[0];
+                        if (delta > 0) content.setTranslationY(delta);
+                        if (vt[0] != null) vt[0].addMovement(ev);
+                        return true;
+                    case MotionEvent.ACTION_UP: case MotionEvent.ACTION_CANCEL:
+                        intercepting = false;
+                        float totalDelta = ev.getRawY() - dragStartRawY[0];
+                        float yVelocity = 0;
+                        if (vt[0] != null) {
+                            vt[0].addMovement(ev);
+                            vt[0].computeCurrentVelocity(1000);
+                            yVelocity = vt[0].getYVelocity();
+                            vt[0].recycle();
+                            vt[0] = null;
+                        }
+                        if (totalDelta > sheetH[0] * 0.3f || yVelocity > 1000)
+                            doAnimatedDismiss[0].run();
+                        else
+                            content.animate().translationY(0).setDuration(200).start();
+                        return true;
+                }
+                return true;
+            }
+        };
+        geckoWrapper.addView(geckoView, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        content.addView(geckoWrapper, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        dialog.setContentView(content);
+        // Full-screen transparent root so the dialog window is MATCH_PARENT × MATCH_PARENT
+        FrameLayout dialogRoot = new FrameLayout(activity);
+        FrameLayout.LayoutParams contentLp = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        contentLp.gravity = Gravity.BOTTOM;
+        dialogRoot.addView(content, contentLp);
+        dialog.setContentView(dialogRoot);
 
-        View sheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
-        if (sheet != null) {
-            // Transparent background so GeckoView's SurfaceView shows through toolbar corners
-            sheet.setBackgroundColor(Color.TRANSPARENT);
-            ViewGroup.LayoutParams lp = sheet.getLayoutParams();
-            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
-            sheet.setLayoutParams(lp);
-            BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(sheet);
-            behavior.setFitToContents(false);
-            behavior.setExpandedOffset(toolbarH / 2);
-            behavior.setSkipCollapsed(true);
-            behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setDimAmount(0f);
+            // Resize the dialog window to the visible area above the keyboard
+            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
 
         final Handler mainHandler = new Handler(Looper.getMainLooper());
-        // Tracks whether the popup was closed via gecko-bridge://return or window.close().
-        // Used by the dismiss listener to decide whether to send a null-return notification.
-        final boolean[] closedByPopup = {false};
-        final Runnable onClose = new Runnable() {
-            public void run() {
-                closedByPopup[0] = true;
-                dialog.dismiss();
+
+        doAnimatedDismiss[0] = new Runnable() {
+            @Override public void run() {
+                float current = content.getTranslationY();
+                long duration = Math.max(80L, (long) (250 * (1f - current / sheetH[0])));
+                dimView.animate().alpha(0f).setDuration(duration).start();
+                content.animate()
+                        .translationY(sheetH[0])
+                        .setDuration(duration)
+                        .withEndAction(new Runnable() {
+                            @Override public void run() { dialog.dismiss(); }
+                        })
+                        .start();
             }
         };
 
+        final Runnable onClose = doAnimatedDismiss[0];
+
         closeBtn.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                dialog.dismiss();
+            @Override public void onClick(View v) { doAnimatedDismiss[0].run(); }
+        });
+
+        dialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+            @Override public boolean onKey(DialogInterface d, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                    doAnimatedDismiss[0].run();
+                    return true;
+                }
+                return false;
             }
         });
 
+        // Tracks whether the popup closed itself (gecko-bridge or window.close).
+        // If not, notify the main session so it can clean up.
+        final boolean[] closedByPopup = {false};
+
         dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface d) {
+            @Override public void onDismiss(DialogInterface d) {
+                activityDecor.removeView(dimView);
                 if (!closedByPopup[0]) {
-                    // User dismissed manually — notify main session so it can clean up
                     mainSession.loadUri("javascript:window.__geckoPopupReturn && "
                             + "window.__geckoPopupReturn(null)");
                 }
@@ -209,30 +400,20 @@ public class GeckoPopupHelper {
             }
         });
 
-        // Gecko already opened the session when onNewSession returned it
-        geckoView.setSession(popupSession);
-        attachPopupDelegates(popupSession, mainSession, onClose, mainHandler);
-
-        dialog.show();
-    }
-
-    /**
-     * Attaches delegates to the popup session:
-     * - gecko-bridge://return passes data back to the main session and closes the sheet
-     * - window.close() closes the sheet
-     */
-    private static void attachPopupDelegates(
-            GeckoSession popupSession,
-            final GeckoSession mainSession,
-            final Runnable onClose,
-            final Handler mainHandler) {
-
+        // Gecko delegates — navigation interception, gecko-bridge, title update, close
         popupSession.setNavigationDelegate(new GeckoSession.NavigationDelegate() {
             @Override
             public GeckoResult<AllowOrDeny> onLoadRequest(
-                    GeckoSession s,
-                    GeckoSession.NavigationDelegate.LoadRequest req) {
-                if (req.uri != null && req.uri.startsWith("gecko-bridge://return")) {
+                    GeckoSession s, GeckoSession.NavigationDelegate.LoadRequest req) {
+                if (req.uri == null) return null;
+
+                if (!req.uri.startsWith("gecko-bridge://") && urlInterceptor != null
+                        && urlInterceptor.shouldHandleExternally(req.uri)) {
+                    mainHandler.post(onClose);
+                    return GeckoResult.fromValue(AllowOrDeny.DENY);
+                }
+
+                if (req.uri.startsWith("gecko-bridge://return")) {
                     try {
                         String[] parts = req.uri.split("\\?data=", 2);
                         String json = parts.length > 1
@@ -240,11 +421,23 @@ public class GeckoPopupHelper {
                                 : "null";
                         mainSession.loadUri("javascript:window.__geckoPopupReturn && "
                                 + "window.__geckoPopupReturn(" + json + ")");
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
+                    closedByPopup[0] = true;
                     mainHandler.post(onClose);
                     return GeckoResult.fromValue(AllowOrDeny.DENY);
                 }
+
+                // Update title bar host on navigation
+                try {
+                    String h = new java.net.URI(req.uri).getHost();
+                    if (h != null && !h.isEmpty()) {
+                        final String host = h;
+                        mainHandler.post(new Runnable() {
+                            public void run() { titleView.setText(host); }
+                        });
+                    }
+                } catch (Exception ignored) {}
+
                 return null;
             }
         });
@@ -252,8 +445,15 @@ public class GeckoPopupHelper {
         popupSession.setContentDelegate(new GeckoSession.ContentDelegate() {
             @Override
             public void onCloseRequest(GeckoSession session) {
+                closedByPopup[0] = true;
                 mainHandler.post(onClose);
             }
         });
+
+        // Open session and show with slide-up entrance
+        geckoView.setSession(popupSession);
+        dialog.show();
+        content.setTranslationY(sheetH[0]);
+        content.animate().translationY(0).setDuration(350).start();
     }
 }
