@@ -36,7 +36,7 @@
   "homepage": "https://github.com/modos189/nativescript-plugins",
   "readmeFilename": "README.md",
   "bootstrapper": "@nativescript/plugin-seed",
-  "dependencies": {
-    "@nativescript-community/ui-webview": "^1.6.0"
+  "peerDependencies": {
+    "@nativescript-community/ui-webview": "^1.6.1"
   }
 }
