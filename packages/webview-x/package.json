@@ -4,6 +4,10 @@
   "description": "Add a plugin description",
   "main": "index",
   "types": "index.d.ts",
+  "exports": {
+    ".": "./index",
+    "./vue": "./vue/index"
+  },
   "nativescript": {
     "platforms": {
       "ios": "6.0.0",
