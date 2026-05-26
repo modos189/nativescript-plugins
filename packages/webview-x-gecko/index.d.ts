@@ -28,4 +28,10 @@ export declare class WebViewX extends View {
 
   /** Returns the current page title (last value received from the engine). */
   getTitle(): Promise<string | undefined>;
+
+  /**
+   * Execute JavaScript in the current page's context and return the result.
+   * Uses a built-in WebExtension bridge; requires GeckoView 65+.
+   */
+  executeJavaScript<T = any>(code: string): Promise<T>;
 }

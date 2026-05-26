@@ -19,7 +19,10 @@ const IMPLEMENTED = {
     { name: 'debugMode', type: 'boolean', desc: 'Enable remote WebView debugging' },
     { name: 'supportPopups', type: 'boolean', desc: 'Open `window.open()` / `target="_blank"` links in a native popup. Default: `true`' },
   ],
-  methods: [{ name: 'getTitle()', returns: 'Promise<string | undefined>', desc: 'Return the current page title' }],
+  methods: [
+    { name: 'getTitle()', returns: 'Promise<string | undefined>', desc: 'Return the current page title' },
+    { name: 'executeJavaScript(code: string)', returns: 'Promise<any>', desc: 'Execute JavaScript in the page context and return the JSON-serialised result' },
+  ],
   events: [
     { name: 'loadStarted', desc: 'Navigation started. `args.url` contains the target URL' },
     { name: 'loadFinished', desc: 'Navigation finished. `args.error` is set on failure' },

@@ -61,6 +61,7 @@ _None._
 | Method | Returns | Description |
 | --- | --- | --- |
 | `getTitle()` | `Promise<string | undefined>` | Return the current page title |
+| `executeJavaScript(code: string)` | `Promise<any>` | Execute JavaScript in the page context and return the JSON-serialised result |
 
 ### Events
 

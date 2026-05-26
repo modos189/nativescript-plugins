@@ -122,8 +122,32 @@ export class WebViewX extends View {
     return this._currentTitle || undefined;
   }
 
+  /**
+   * Execute JavaScript in the current page's context and return the result.
+   * Uses a built-in WebExtension bridge; requires GeckoView 65+.
+   */
+  executeJavaScript<T = any>(code: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const bridge = com.modos189.webviewxgecko.GeckoJsBridge.getInstance();
+      const id = bridge.nextId();
+      bridge.executeScript(
+        id,
+        code,
+        new com.modos189.webviewxgecko.GeckoJsBridge.JsCallback({
+          onResult(jsonResult: string): void {
+            resolve(_parseJsResult(jsonResult) as T);
+          },
+          onError(error: string): void {
+            reject(new Error(error));
+          },
+        }),
+      );
+    });
+  }
+
   createNativeView(): org.mozilla.geckoview.GeckoView {
     const runtime = com.modos189.webviewxgecko.GeckoPopupHelper.getRuntime(Application.android.context);
+    com.modos189.webviewxgecko.GeckoJsBridge.getInstance().setup(runtime);
     const session = new org.mozilla.geckoview.GeckoSession();
 
     this._popupHelper = new com.modos189.webviewxgecko.GeckoPopupHelper(session, this._context, true);
@@ -196,3 +220,12 @@ srcProperty.register(WebViewX);
 debugModeProperty.register(WebViewX);
 supportPopupsProperty.register(WebViewX);
 userAgentProperty.register(WebViewX);
+
+function _parseJsResult(jsonString: string | null | undefined): unknown {
+  if (!jsonString || jsonString === 'null') return null;
+  try {
+    return JSON.parse(jsonString);
+  } catch {
+    return jsonString;
+  }
+}
