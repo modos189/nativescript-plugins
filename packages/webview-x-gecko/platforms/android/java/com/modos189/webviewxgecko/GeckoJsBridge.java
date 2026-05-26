@@ -13,7 +13,9 @@ import org.mozilla.geckoview.WebExtensionController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.lang.ref.WeakReference;
 
 /**
  * Singleton bridge for executing JavaScript in GeckoView pages via a built-in WebExtension.
@@ -39,6 +41,32 @@ public class GeckoJsBridge implements WebExtension.MessageDelegate, WebExtension
     public interface JsCallback {
         void onResult(String jsonResult);
         void onError(String error);
+    }
+
+    public interface BridgeEventListener {
+        void onBridgeEvent(String eventName, String dataJson);
+    }
+
+    private final CopyOnWriteArrayList<WeakReference<BridgeEventListener>> mBridgeListeners = new CopyOnWriteArrayList<>();
+
+    public void addBridgeListener(BridgeEventListener listener) {
+        mBridgeListeners.add(new WeakReference<>(listener));
+    }
+
+    public void removeBridgeListener(BridgeEventListener listener) {
+        mBridgeListeners.removeIf(ref -> {
+            BridgeEventListener l = ref.get();
+            return l == null || l == listener;
+        });
+    }
+
+    private void notifyBridgeListeners(String eventName, String dataJson) {
+        for (WeakReference<BridgeEventListener> ref : mBridgeListeners) {
+            BridgeEventListener listener = ref.get();
+            if (listener != null) {
+                listener.onBridgeEvent(eventName, dataJson);
+            }
+        }
     }
 
     public static GeckoJsBridge getInstance() {
@@ -116,6 +144,13 @@ public class GeckoJsBridge implements WebExtension.MessageDelegate, WebExtension
         if (!(message instanceof JSONObject)) return;
         final JSONObject obj = (JSONObject) message;
         try {
+            if ("bridge-emit".equals(obj.optString("type"))) {
+                final String eventName = obj.optString("eventName", "");
+                final String data = obj.optString("data", "null");
+                mMainHandler.post(() -> notifyBridgeListeners(eventName, data));
+                return;
+            }
+
             final String id = obj.getString("id");
             final JsCallback callback = mPendingCallbacks.remove(id);
             if (callback == null) return;

@@ -18,10 +18,12 @@ const IMPLEMENTED = {
     { name: 'userAgent', type: 'string', desc: 'Set a custom User-Agent string' },
     { name: 'debugMode', type: 'boolean', desc: 'Enable remote WebView debugging' },
     { name: 'supportPopups', type: 'boolean', desc: 'Open `window.open()` / `target="_blank"` links in a native popup. Default: `true`' },
+    { name: 'autoInjectJSBridge', type: 'boolean', desc: 'Inject `window.nsWebViewBridge` on every `loadFinished`. Default: `true`' },
   ],
   methods: [
     { name: 'getTitle()', returns: 'Promise<string | undefined>', desc: 'Return the current page title' },
     { name: 'executeJavaScript(code: string)', returns: 'Promise<any>', desc: 'Execute JavaScript in the page context and return the JSON-serialised result' },
+    { name: 'emitToWebView(eventName: string, data: any)', returns: 'void', desc: "Emit an event into the page's `nsWebViewBridge` (calls `onNativeEvent` inside the WebView)" },
   ],
   events: [
     { name: 'loadStarted', desc: 'Navigation started. `args.url` contains the target URL' },

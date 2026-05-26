@@ -4,6 +4,7 @@ import { Property } from '@nativescript/core';
 export declare const srcProperty: Property<WebViewX, string>;
 export declare const debugModeProperty: Property<WebViewX, boolean>;
 export declare const supportPopupsProperty: Property<WebViewX, boolean>;
+export declare const autoInjectJSBridgeProperty: Property<WebViewX, boolean>;
 
 export * from './common';
 import { LoadStartedEventData, LoadFinishedEventData, LoadProgressEventData, TitleChangedEventData } from './common';
@@ -19,6 +20,7 @@ export declare class WebViewX extends View {
   debugMode: boolean;
   supportPopups: boolean;
   userAgent: string;
+  autoInjectJSBridge: boolean;
 
   on(event: 'loadStarted', callback: (args: LoadStartedEventData) => void, thisArg?: any): void;
   on(event: 'loadFinished', callback: (args: LoadFinishedEventData) => void, thisArg?: any): void;
@@ -29,9 +31,12 @@ export declare class WebViewX extends View {
   /** Returns the current page title (last value received from the engine). */
   getTitle(): Promise<string | undefined>;
 
-  /**
-   * Execute JavaScript in the current page's context and return the result.
-   * Uses a built-in WebExtension bridge; requires GeckoView 65+.
-   */
+  /** Execute JavaScript in the current page's context and return the result. */
   executeJavaScript<T = any>(code: string): Promise<T>;
+
+  /** Emit an event into the page's nsWebViewBridge. */
+  emitToWebView(eventName: string, data: any): void;
+
+  /** Called when the page's nsWebViewBridge.emit() fires. Dispatches a NativeScript event. */
+  onWebViewEvent(eventName: string, data: any): void;
 }

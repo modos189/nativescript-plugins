@@ -23,3 +23,14 @@ browser.runtime.onMessage.addListener((data) => {
     return Promise.resolve({ id: data.id, error: e.toString() });
   }
 });
+
+// Forward nsWebViewBridge.emit() calls from the page to the native layer.
+// The bridge JS (injected on loadFinished) dispatches this CustomEvent on document
+// when window.nsWebViewBridge.emit() is called.
+document.addEventListener('__ns_bridge_emit__', (event) => {
+  browser.runtime.sendMessage({
+    type: 'bridge-emit',
+    eventName: event.detail.eventName,
+    data: event.detail.data,
+  });
+});

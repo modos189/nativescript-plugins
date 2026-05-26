@@ -55,6 +55,7 @@ _None._
 | `userAgent` | `string` | Set a custom User-Agent string |
 | `debugMode` | `boolean` | Enable remote WebView debugging |
 | `supportPopups` | `boolean` | Open `window.open()` / `target="_blank"` links in a native popup. Default: `true` |
+| `autoInjectJSBridge` | `boolean` | Inject `window.nsWebViewBridge` on every `loadFinished`. Default: `true` |
 
 ### Methods
 
@@ -62,6 +63,7 @@ _None._
 | --- | --- | --- |
 | `getTitle()` | `Promise<string | undefined>` | Return the current page title |
 | `executeJavaScript(code: string)` | `Promise<any>` | Execute JavaScript in the page context and return the JSON-serialised result |
+| `emitToWebView(eventName: string, data: any)` | `void` | Emit an event into the page's `nsWebViewBridge` (calls `onNativeEvent` inside the WebView) |
 
 ### Events
 

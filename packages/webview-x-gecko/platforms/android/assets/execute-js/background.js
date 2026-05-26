@@ -11,6 +11,14 @@ async function sendMessageToTab(message) {
   return await browser.tabs.sendMessage(tabs[tabs.length - 1].id, message);
 }
 
+// Forward nsWebViewBridge.emit() events from content script to native
+browser.runtime.onMessage.addListener((message) => {
+  if (message.type === 'bridge-emit') {
+    port.postMessage(message);
+    return false;
+  }
+});
+
 port.onMessage.addListener((request) => {
   sendMessageToTab(request)
     .then((resp) => port.postMessage(resp))

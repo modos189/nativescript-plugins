@@ -61,6 +61,23 @@ declare namespace com {
           constructor(listener: ContentListener);
         }
       }
+
+      class GeckoJsBridge {
+        static getInstance(): GeckoJsBridge;
+        nextId(): string;
+        setup(runtime: org.mozilla.geckoview.GeckoRuntime): void;
+        executeScript(id: string, code: string, callback: GeckoJsBridge.JsCallback): void;
+        addBridgeListener(listener: GeckoJsBridge.BridgeEventListener): void;
+        removeBridgeListener(listener: GeckoJsBridge.BridgeEventListener): void;
+      }
+      namespace GeckoJsBridge {
+        class JsCallback {
+          constructor(impl: { onResult(jsonResult: string): void; onError(error: string): void });
+        }
+        class BridgeEventListener {
+          constructor(impl: { onBridgeEvent(eventName: string, dataJson: string): void });
+        }
+      }
     }
   }
 }

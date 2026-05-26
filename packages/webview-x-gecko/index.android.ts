@@ -1,4 +1,5 @@
 import { Application, View, Property, booleanConverter } from '@nativescript/core';
+import { geckoBridgeJs as _GECKO_BRIDGE_JS } from './gecko-bridge-loader';
 import { LOAD_STARTED_EVENT, LOAD_FINISHED_EVENT, LOAD_PROGRESS_EVENT, TITLE_CHANGED_EVENT, LoadStartedEventData, LoadFinishedEventData, LoadProgressEventData, TitleChangedEventData } from './common';
 
 export * from './common';
@@ -25,6 +26,12 @@ export const supportPopupsProperty: Property<WebViewX, boolean> = new Property<W
 
 export const userAgentProperty: Property<WebViewX, string> = new Property<WebViewX, string>({
   name: 'userAgent',
+});
+
+export const autoInjectJSBridgeProperty: Property<WebViewX, boolean> = new Property<WebViewX, boolean>({
+  name: 'autoInjectJSBridge',
+  defaultValue: true,
+  valueConverter: booleanConverter,
 });
 
 export class WebViewX extends View {
@@ -60,6 +67,9 @@ export class WebViewX extends View {
   debugMode!: boolean;
   supportPopups!: boolean;
   userAgent!: string;
+  autoInjectJSBridge!: boolean;
+
+  private _bridgeListener: com.modos189.webviewxgecko.GeckoJsBridge.BridgeEventListener | null = null;
 
   _onPopupNavigate(url: string): boolean {
     const args: any = {
@@ -81,7 +91,7 @@ export class WebViewX extends View {
     } as LoadStartedEventData);
   }
 
-  _onLoadFinished(url: string, error?: string): void {
+  async _onLoadFinished(url: string, error?: string): Promise<void> {
     if (!error) {
       try {
         this._tempSuspendSrcLoading = true;
@@ -90,12 +100,30 @@ export class WebViewX extends View {
         this._tempSuspendSrcLoading = false;
       }
     }
+    if (!error && this.autoInjectJSBridge) {
+      try {
+        await this.executeJavaScript(_GECKO_BRIDGE_JS);
+      } catch {
+        // bridge injection is best-effort
+      }
+    }
     this.notify({
       eventName: LOAD_FINISHED_EVENT,
       object: this,
       url,
       error,
     } as LoadFinishedEventData);
+  }
+
+  emitToWebView(eventName: string, data: any): void {
+    const code = `window.nsWebViewBridge&&nsWebViewBridge.onNativeEvent(${JSON.stringify(eventName)},${JSON.stringify(data)});`;
+    this.executeJavaScript(code).catch(() => {
+      // ignore — page may not have bridge
+    });
+  }
+
+  onWebViewEvent(eventName: string, data: any): void {
+    this.notify({ eventName, data });
   }
 
   _loadProgress(progress: number): void {
@@ -148,6 +176,22 @@ export class WebViewX extends View {
   createNativeView(): org.mozilla.geckoview.GeckoView {
     const runtime = com.modos189.webviewxgecko.GeckoPopupHelper.getRuntime(Application.android.context);
     com.modos189.webviewxgecko.GeckoJsBridge.getInstance().setup(runtime);
+
+    const selfRef = new WeakRef(this);
+    this._bridgeListener = new com.modos189.webviewxgecko.GeckoJsBridge.BridgeEventListener({
+      onBridgeEvent(eventName: string, dataJson: string): void {
+        const owner = selfRef.deref();
+        if (!owner) return;
+        let data: any;
+        try {
+          data = JSON.parse(dataJson);
+        } catch {
+          data = dataJson;
+        }
+        owner.onWebViewEvent(eventName, data);
+      },
+    });
+    com.modos189.webviewxgecko.GeckoJsBridge.getInstance().addBridgeListener(this._bridgeListener);
     const session = new org.mozilla.geckoview.GeckoSession();
 
     this._popupHelper = new com.modos189.webviewxgecko.GeckoPopupHelper(session, this._context, true);
@@ -186,6 +230,10 @@ export class WebViewX extends View {
   }
 
   disposeNativeView(): void {
+    if (this._bridgeListener) {
+      com.modos189.webviewxgecko.GeckoJsBridge.getInstance().removeBridgeListener(this._bridgeListener);
+      this._bridgeListener = null;
+    }
     this._popupHelper = null;
     if (this._session) {
       this._session.setProgressDelegate(null);
@@ -214,12 +262,17 @@ export class WebViewX extends View {
   [userAgentProperty.setNative](value: string): void {
     (this._session as any)?.getSettings().setUserAgentOverride(value || null);
   }
+
+  [autoInjectJSBridgeProperty.setNative](_value: boolean): void {
+    // value stored as a property field; read in _onLoadFinished
+  }
 }
 
 srcProperty.register(WebViewX);
 debugModeProperty.register(WebViewX);
 supportPopupsProperty.register(WebViewX);
 userAgentProperty.register(WebViewX);
+autoInjectJSBridgeProperty.register(WebViewX);
 
 function _parseJsResult(jsonString: string | null | undefined): unknown {
   if (!jsonString || jsonString === 'null') return null;
