@@ -19,8 +19,14 @@ const IMPLEMENTED = {
     { name: 'debugMode', type: 'boolean', desc: 'Enable remote WebView debugging' },
     { name: 'supportPopups', type: 'boolean', desc: 'Open `window.open()` / `target="_blank"` links in a native popup. Default: `true`' },
   ],
-  methods: [],
-  events: [{ name: 'popupNavigate', desc: 'Android: fired on each navigation inside a popup; set `args.cancel = true` to intercept and dismiss the popup (e.g. capture OAuth redirect). `args.url` contains the target URL.' }],
+  methods: [{ name: 'getTitle()', returns: 'Promise<string | undefined>', desc: 'Return the current page title' }],
+  events: [
+    { name: 'loadStarted', desc: 'Navigation started. `args.url` contains the target URL' },
+    { name: 'loadFinished', desc: 'Navigation finished. `args.error` is set on failure' },
+    { name: 'loadProgress', desc: 'Android: page load progress. `args.progress` is 0–100' },
+    { name: 'titleChanged', desc: 'Page title changed. `args.title` contains the new title' },
+    { name: 'popupNavigate', desc: 'Android: fired on each navigation inside a popup; set `args.cancel = true` to intercept and dismiss the popup (e.g. capture OAuth redirect). `args.url` contains the target URL.' },
+  ],
 };
 
 const API_REFERENCE = {

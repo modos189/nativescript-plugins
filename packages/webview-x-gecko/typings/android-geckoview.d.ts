@@ -17,8 +17,8 @@ declare namespace org {
         close(): void;
         loadUri(uri: string): void;
         setNavigationDelegate(delegate: any): void;
-        setProgressDelegate(delegate: any): void;
-        setContentDelegate(delegate: any): void;
+        setProgressDelegate(delegate: com.modos189.webviewxgecko.GeckoDelegates.ProgressDelegate | null): void;
+        setContentDelegate(delegate: com.modos189.webviewxgecko.GeckoDelegates.ContentDelegate | null): void;
       }
       class GeckoView extends android.view.View {
         constructor(context: android.content.Context);
@@ -34,15 +34,31 @@ declare namespace com {
     namespace webviewxgecko {
       class GeckoPopupHelper {
         constructor(session: org.mozilla.geckoview.GeckoSession, context: android.content.Context, supportPopups: boolean);
+        setUrlInterceptor(interceptor: GeckoPopupHelper.PopupUrlInterceptor): void;
+        setSupportPopups(value: boolean): void;
         static getRuntime(context: android.content.Context): org.mozilla.geckoview.GeckoRuntime;
         static setRemoteDebuggingEnabled(enabled: boolean): void;
-        setSupportPopups(value: boolean): void;
-        setUrlInterceptor(interceptor: GeckoPopupHelper.PopupUrlInterceptor): void;
       }
       namespace GeckoPopupHelper {
+        // Constructor accepts an object with method implementations (NativeScript interface pattern)
         class PopupUrlInterceptor {
-          constructor(implementation: { shouldHandleExternally(url: string): boolean });
-          shouldHandleExternally(url: string): boolean;
+          constructor(impl: { shouldHandleExternally(url: string): boolean });
+        }
+      }
+
+      namespace GeckoDelegates {
+        // Constructors accept objects with method implementations (NativeScript interface pattern)
+        class ProgressListener {
+          constructor(impl: { onPageStart(url: string): void; onPageStop(success: boolean): void; onProgressChange(progress: number): void });
+        }
+        class ContentListener {
+          constructor(impl: { onTitleChange(title: string): void });
+        }
+        class ProgressDelegate {
+          constructor(listener: ProgressListener);
+        }
+        class ContentDelegate {
+          constructor(listener: ContentListener);
         }
       }
     }

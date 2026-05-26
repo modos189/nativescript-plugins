@@ -58,12 +58,18 @@ _None._
 
 ### Methods
 
-_None implemented yet._
+| Method | Returns | Description |
+| --- | --- | --- |
+| `getTitle()` | `Promise<string | undefined>` | Return the current page title |
 
 ### Events
 
 | Event | Description |
 | --- | --- |
+| `loadStarted` | Navigation started. `args.url` contains the target URL |
+| `loadFinished` | Navigation finished. `args.error` is set on failure |
+| `loadProgress` | Android: page load progress. `args.progress` is 0–100 |
+| `titleChanged` | Page title changed. `args.title` contains the new title |
 | `popupNavigate` | Android: fired on each navigation inside a popup; set `args.cancel = true` to intercept and dismiss the popup (e.g. capture OAuth redirect). `args.url` contains the target URL. |
 
 
