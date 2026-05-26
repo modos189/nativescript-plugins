@@ -12,22 +12,14 @@ const path = require('path');
 // ─── Single source of truth ──────────────────────────────────────────────────
 
 const IMPLEMENTED = {
-  statics: [
-    {
-      name: 'userAgentTransform',
-      type: '((defaultUA: string \\| null) => string \\| null) \\| null',
-      desc: 'Set once at app startup before any `WebViewX` is created. Applied automatically during native view initialization, before the first URL loads. `defaultUA` is the platform default UA string on Android system WebView, `null` on iOS/GeckoView (unavailable synchronously). Return the desired UA string, or `null` to leave the platform default unchanged.',
-    },
-  ],
+  statics: [],
   properties: [
     { name: 'src', type: 'string', desc: 'URL to load (data-binding supported)' },
+    { name: 'userAgent', type: 'string', desc: 'Set a custom User-Agent string' },
     { name: 'debugMode', type: 'boolean', desc: 'Enable remote WebView debugging' },
     { name: 'supportPopups', type: 'boolean', desc: 'Open `window.open()` / `target="_blank"` links in a native popup. Default: `true`' },
   ],
-  methods: [
-    { name: 'getUserAgentOverride()', returns: 'string \\| null', desc: 'Return the active UA override, or `null` if none is set (platform default is used)' },
-    { name: 'setUserAgentOverride(ua: string \\| null)', returns: 'void', desc: 'Set a custom UA string for this instance; pass `null` or empty string to clear the override and restore the platform default. Applies to subsequent navigations' },
-  ],
+  methods: [],
   events: [{ name: 'popupNavigate', desc: 'Android: fired on each navigation inside a popup; set `args.cancel = true` to intercept and dismiss the popup (e.g. capture OAuth redirect). `args.url` contains the target URL.' }],
 };
 
@@ -190,7 +182,7 @@ webview.on('loadFinished', () => {
 });
 \`\`\`
 
-${implementedSection(IMPLEMENTED, [{ name: 'getDefaultUserAgent()', returns: 'string', desc: '**Android only.** Return the system default UA string for this device, unaffected by any override. Useful as the input to `userAgentTransform`' }])}
+${implementedSection(IMPLEMENTED)}
 
 ${apiReferenceSection(API_REFERENCE, 'Full API inherited from `@nativescript-community/ui-webview`. All items are available — `WebViewX` extends `AWebView` directly.')}
 

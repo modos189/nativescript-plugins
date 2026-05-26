@@ -45,25 +45,20 @@ _Available in both `@modos189/nativescript-webview-x` and `@modos189/nativescrip
 
 ### Static properties
 
-| Static property | Type | Description |
-| --- | --- | --- |
-| `userAgentTransform` | `((defaultUA: string \| null) => string \| null) \| null` | Set once at app startup before any `WebViewX` is created. Applied automatically during native view initialization, before the first URL loads. `defaultUA` is the platform default UA string on Android system WebView, `null` on iOS/GeckoView (unavailable synchronously). Return the desired UA string, or `null` to leave the platform default unchanged. |
+_None._
 
 ### Properties
 
 | Property | Type | Description |
 | --- | --- | --- |
 | `src` | `string` | URL to load (data-binding supported) |
+| `userAgent` | `string` | Set a custom User-Agent string |
 | `debugMode` | `boolean` | Enable remote WebView debugging |
 | `supportPopups` | `boolean` | Open `window.open()` / `target="_blank"` links in a native popup. Default: `true` |
 
 ### Methods
 
-| Method | Returns | Description |
-| --- | --- | --- |
-| `getUserAgentOverride()` | `string \| null` | Return the active UA override, or `null` if none is set (platform default is used) |
-| `setUserAgentOverride(ua: string \| null)` | `void` | Set a custom UA string for this instance; pass `null` or empty string to clear the override and restore the platform default. Applies to subsequent navigations |
-| `getDefaultUserAgent()` | `string` | **Android only.** Return the system default UA string for this device, unaffected by any override. Useful as the input to `userAgentTransform` |
+_None implemented yet._
 
 ### Events
 

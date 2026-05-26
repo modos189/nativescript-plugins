@@ -20,9 +20,11 @@ export const supportPopupsProperty: Property<WebViewX, boolean> = new Property<W
   valueConverter: booleanConverter,
 });
 
-export class WebViewX extends View {
-  static userAgentTransform: ((defaultUA: string | null) => string | null) | null = null;
+export const userAgentProperty: Property<WebViewX, string> = new Property<WebViewX, string>({
+  name: 'userAgent',
+});
 
+export class WebViewX extends View {
   static get popupNavigateEvent() {
     return POPUP_NAVIGATE_EVENT;
   }
@@ -33,6 +35,7 @@ export class WebViewX extends View {
   src!: string;
   debugMode!: boolean;
   supportPopups!: boolean;
+  userAgent!: string;
 
   _onPopupNavigate(url: string): boolean {
     const args: any = {
@@ -47,13 +50,6 @@ export class WebViewX extends View {
   createNativeView(): org.mozilla.geckoview.GeckoView {
     const runtime = com.modos189.webviewxgecko.GeckoPopupHelper.getRuntime(Application.android.context);
     const session = new org.mozilla.geckoview.GeckoSession();
-
-    if (WebViewX.userAgentTransform) {
-      const newUA = WebViewX.userAgentTransform(null);
-      if (newUA !== null) {
-        (session as any).getSettings().setUserAgentOverride(newUA);
-      }
-    }
 
     // GeckoPopupHelper sets the NavigationDelegate and manages popup windows.
     // this._context is the Activity context — required for Dialog creation.
@@ -90,19 +86,16 @@ export class WebViewX extends View {
     com.modos189.webviewxgecko.GeckoPopupHelper.setRemoteDebuggingEnabled(!!value);
   }
 
-  getUserAgentOverride(): string | null {
-    return (this._session as any)?.getSettings().getUserAgentOverride() ?? null;
-  }
-
-  setUserAgentOverride(ua: string | null): void {
-    (this._session as any)?.getSettings().setUserAgentOverride(ua || null);
-  }
-
   [supportPopupsProperty.setNative](value: boolean): void {
     this._popupHelper?.setSupportPopups(!!value);
+  }
+
+  [userAgentProperty.setNative](value: string): void {
+    (this._session as any)?.getSettings().setUserAgentOverride(value || null);
   }
 }
 
 srcProperty.register(WebViewX);
 debugModeProperty.register(WebViewX);
 supportPopupsProperty.register(WebViewX);
+userAgentProperty.register(WebViewX);
