@@ -9,6 +9,7 @@ export class WebViewX extends AWebView {
   }
 
   private _popupClient: com.modos189.webviewx.PopupWebChromeClient | null = null;
+  private _localResourceClient: com.modos189.webviewx.LocalResourceWebViewClient | null = null;
 
   _onPopupNavigate(url: string): boolean {
     const args: any = {
@@ -28,6 +29,12 @@ export class WebViewX extends AWebView {
 
     const wv = nv as unknown as android.webkit.WebView;
 
+    // shouldInterceptRequest is called on Chromium's network thread; NativeScript cannot
+    // safely dispatch to V8 from there — wrap the NS client so it runs entirely in Java.
+    const nsClient = (wv as any).getWebViewClient() as android.webkit.WebViewClient;
+    this._localResourceClient = new com.modos189.webviewx.LocalResourceWebViewClient(nsClient);
+    wv.setWebViewClient(this._localResourceClient);
+
     const existing = wv.getWebChromeClient();
     this._popupClient = new com.modos189.webviewx.PopupWebChromeClient(existing, true, this._context);
     const interceptor = new com.modos189.webviewx.PopupWebChromeClient.PopupUrlInterceptor({
@@ -44,8 +51,27 @@ export class WebViewX extends AWebView {
   }
 
   disposeNativeView(): void {
+    this._localResourceClient = null;
     this._popupClient = null;
     super.disposeNativeView();
+  }
+
+  registerLocalResource(resourceName: string, path: string): void {
+    super.registerLocalResource(resourceName, path);
+    if (this._localResourceClient) {
+      const filepath = (this as any).resolveLocalResourceFilePath(path);
+      if (filepath) {
+        const fixedName = (this as any).fixLocalResourceName(resourceName);
+        this._localResourceClient.registerResource(fixedName, filepath);
+      }
+    }
+  }
+
+  unregisterLocalResource(resourceName: string): void {
+    super.unregisterLocalResource(resourceName);
+    if (this._localResourceClient) {
+      this._localResourceClient.unregisterResource((this as any).fixLocalResourceName(resourceName));
+    }
   }
 
   [supportPopupsProperty.setNative](value: boolean): void {
