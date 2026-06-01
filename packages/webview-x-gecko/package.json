@@ -1,6 +1,6 @@
 {
   "name": "@modos189/nativescript-webview-x-gecko",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Add a plugin description",
   "main": "index",
   "types": "index.d.ts",
