@@ -20,3 +20,20 @@ declare namespace com {
     }
   }
 }
+
+declare namespace androidx {
+  namespace webkit {
+    class WebViewFeature {
+      static DOCUMENT_START_SCRIPT: string;
+      static isFeatureSupported(feature: string): boolean;
+    }
+    class WebViewCompat {
+      static addDocumentStartJavaScript(webView: android.webkit.WebView, javaScript: string, allowedOriginRules: java.util.Set<string>): androidx.webkit.WebViewCompat.ScriptHandler;
+    }
+    namespace WebViewCompat {
+      class ScriptHandler {
+        remove(): void;
+      }
+    }
+  }
+}
