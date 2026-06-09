@@ -2,6 +2,7 @@ export * from '@nativescript-community/ui-webview/index.android';
 import { AWebView, autoInjectJSBridgeProperty, supportPopupsProperty } from '@nativescript-community/ui-webview/index.android';
 import { webViewBridge } from '@nativescript-community/ui-webview/nativescript-webview-bridge-loader';
 import { File, Property } from '@nativescript/core';
+import { openFilePicker } from '@nativescript-community/ui-document-picker';
 
 const POPUP_NAVIGATE_EVENT = 'popupNavigate';
 
@@ -87,6 +88,49 @@ export class WebViewX extends AWebView {
     return args.cancel === true;
   }
 
+  private async _onShowFileChooser(acceptTypes: ArrayLike<string>, allowMultiple: boolean): Promise<void> {
+    let uris: string[] = [];
+    try {
+      // Keep MIME types only; extension-style accepts (e.g. ".gpx") and the catch-all
+      // "*/*" would over-restrict the picker, so fall back to showing all files instead.
+      const mimeTypes: string[] = [];
+      if (acceptTypes) {
+        for (let i = 0; i < acceptTypes.length; i++) {
+          const t = acceptTypes[i];
+          if (t && t.indexOf('/') !== -1 && t !== '*/*') {
+            mimeTypes.push(t);
+          }
+        }
+      }
+
+      const options: any = {
+        multipleSelection: allowMultiple,
+        forceSAF: true,
+      };
+      if (mimeTypes.length) {
+        options.mimeTypes = mimeTypes;
+      }
+
+      const result = await openFilePicker(options);
+      if (result?.files?.length) {
+        uris = result.files;
+      }
+    } catch (err) {
+      console.error('WebViewX: file chooser error', err);
+    } finally {
+      this._deliverFileChooserResult(uris);
+    }
+  }
+
+  private _deliverFileChooserResult(uris: string[]): void {
+    if (!this._popupClient) return;
+    const arr = Array.create(java.lang.String, uris.length);
+    for (let i = 0; i < uris.length; i++) {
+      arr[i] = uris[i];
+    }
+    this._popupClient.deliverFileChooserResult(arr);
+  }
+
   initNativeView(): void {
     super.initNativeView();
 
@@ -109,6 +153,16 @@ export class WebViewX extends AWebView {
       },
     });
     this._popupClient.setUrlInterceptor(interceptor);
+
+    // Present a native file picker for <input type="file"> in the main WebView
+    const fileChooserInterceptor = new com.modos189.webviewx.PopupWebChromeClient.FileChooserInterceptor({
+      onShowFileChooser: (acceptTypes: ArrayLike<string>, allowMultiple: boolean) => {
+        this._onShowFileChooser(acceptTypes, allowMultiple);
+        return true;
+      },
+    });
+    this._popupClient.setFileChooserInterceptor(fileChooserInterceptor);
+
     wv.setWebChromeClient(this._popupClient);
 
     const settings = wv.getSettings();
@@ -127,6 +181,10 @@ export class WebViewX extends AWebView {
       entry.handler = null;
     }
     this._localResourceClient = null;
+    // Cancel any in-flight file chooser so the WebView does not stay stuck
+    if (this._popupClient) {
+      this._popupClient.deliverFileChooserResult(null);
+    }
     this._popupClient = null;
     super.disposeNativeView();
   }

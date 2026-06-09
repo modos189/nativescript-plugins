@@ -29,6 +29,7 @@
     "@angular/platform-browser": "^19.0.0",
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
+    "@nativescript-community/ui-document-picker": "^1.1.29",
     "@nativescript-community/ui-webview": "^1.6.1",
     "@nativescript/angular": "^19.0.0",
     "@nativescript/core": "~9.0.0",

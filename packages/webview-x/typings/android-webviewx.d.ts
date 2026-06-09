@@ -10,11 +10,17 @@ declare namespace com {
         constructor(delegate: android.webkit.WebChromeClient, supportPopups: boolean, activityContext: android.content.Context);
         setSupportPopups(value: boolean): void;
         setUrlInterceptor(interceptor: PopupWebChromeClient.PopupUrlInterceptor): void;
+        setFileChooserInterceptor(interceptor: PopupWebChromeClient.FileChooserInterceptor): void;
+        deliverFileChooserResult(filePaths: native.Array<string>): void;
       }
       namespace PopupWebChromeClient {
         class PopupUrlInterceptor {
           constructor(implementation: { shouldHandleExternally(url: string): boolean });
           shouldHandleExternally(url: string): boolean;
+        }
+        class FileChooserInterceptor {
+          constructor(implementation: { onShowFileChooser(acceptTypes: native.Array<string>, allowMultiple: boolean): boolean });
+          onShowFileChooser(acceptTypes: native.Array<string>, allowMultiple: boolean): boolean;
         }
       }
     }

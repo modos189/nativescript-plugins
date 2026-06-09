@@ -37,6 +37,7 @@
   "readmeFilename": "README.md",
   "bootstrapper": "@nativescript/plugin-seed",
   "peerDependencies": {
+    "@nativescript-community/ui-document-picker": "^1.1.29",
     "@nativescript-community/ui-webview": "^1.6.1"
   }
 }

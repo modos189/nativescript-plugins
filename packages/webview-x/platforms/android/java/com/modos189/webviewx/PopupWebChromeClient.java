@@ -35,6 +35,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,11 +52,26 @@ public class PopupWebChromeClient extends WebChromeClient {
         boolean shouldHandleExternally(String url);
     }
 
+    /**
+     * Internal bridge between Java and the TypeScript layer for handling {@code <input type="file">}.
+     * The TS layer sets this interceptor in {@code initNativeView} and presents the native picker
+     * itself. Return true if handled: the TS layer MUST later call
+     * {@link #deliverFileChooserResult(String[])} (with selected URIs or null on cancel).
+     * Return false to fall back to the delegate's default handling.
+     */
+    public interface FileChooserInterceptor {
+        boolean onShowFileChooser(String[] acceptTypes, boolean allowMultiple);
+    }
+
     private final WebChromeClient delegate;
     private volatile boolean supportPopups;
     private final WeakReference<Context> activityContextRef;
     private final Map<WebView, Dialog> popupDialogs = new HashMap<>();
     private PopupUrlInterceptor urlInterceptor;
+    private FileChooserInterceptor fileChooserInterceptor;
+
+    /** Retained ValueCallback for an in-flight file chooser; null when none is pending. */
+    private ValueCallback<Uri[]> pendingFileCallback;
 
     public PopupWebChromeClient(WebChromeClient delegate, boolean supportPopups, Context activityContext) {
         this.delegate = delegate;
@@ -69,6 +85,44 @@ public class PopupWebChromeClient extends WebChromeClient {
 
     public void setUrlInterceptor(PopupUrlInterceptor interceptor) {
         this.urlInterceptor = interceptor;
+    }
+
+    public void setFileChooserInterceptor(FileChooserInterceptor interceptor) {
+        this.fileChooserInterceptor = interceptor;
+    }
+
+    /**
+     * Delivers the result of the native file picker back to the WebView.
+     * Pass the selected URIs (content:// or file://), or null/empty to signal cancellation.
+     * Must be called on the UI thread. No-op if no chooser is pending.
+     */
+    public void deliverFileChooserResult(String[] filePaths) {
+        ValueCallback<Uri[]> callback = pendingFileCallback;
+        pendingFileCallback = null;
+        if (callback == null) return;
+
+        Uri[] uris = null;
+        if (filePaths != null && filePaths.length > 0) {
+            uris = new Uri[filePaths.length];
+            for (int i = 0; i < filePaths.length; i++) {
+                uris[i] = toUri(filePaths[i]);
+            }
+        }
+        callback.onReceiveValue(uris);
+    }
+
+    /**
+     * Build a Uri from a string returned by the TS layer. Content-provider URIs
+     * (content://) are passed through unchanged so the WebView resolves the real
+     * display name, MIME type and bytes via ContentResolver; bare filesystem paths
+     * are wrapped as file:// URIs.
+     */
+    private static Uri toUri(String value) {
+        Uri uri = Uri.parse(value);
+        if (uri.getScheme() == null) {
+            return Uri.fromFile(new File(value));
+        }
+        return uri;
     }
 
     @Override
@@ -524,7 +578,27 @@ public class PopupWebChromeClient extends WebChromeClient {
     @Override
     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
             FileChooserParams fileChooserParams) {
-        return delegate.onShowFileChooser(webView, filePathCallback, fileChooserParams);
+        if (fileChooserInterceptor == null) {
+            return delegate.onShowFileChooser(webView, filePathCallback, fileChooserParams);
+        }
+
+        // Cancel any previous chooser still awaiting a result before replacing it
+        if (pendingFileCallback != null) {
+            pendingFileCallback.onReceiveValue(null);
+        }
+        pendingFileCallback = filePathCallback;
+
+        String[] acceptTypes = fileChooserParams != null ? fileChooserParams.getAcceptTypes() : null;
+        if (acceptTypes == null) acceptTypes = new String[0];
+        boolean allowMultiple = fileChooserParams != null
+                && fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
+
+        boolean handled = fileChooserInterceptor.onShowFileChooser(acceptTypes, allowMultiple);
+        if (!handled) {
+            pendingFileCallback = null;
+            return delegate.onShowFileChooser(webView, filePathCallback, fileChooserParams);
+        }
+        return true;
     }
 
     @Override
