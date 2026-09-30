@@ -73,7 +73,7 @@ _None._
 | `loadFinished` | Navigation finished. `args.error` is set on failure |
 | `loadProgress` | Android: page load progress. `args.progress` is 0–100 |
 | `titleChanged` | Page title changed. `args.title` contains the new title |
-| `popupNavigate` | Android: fired on each navigation inside a popup; set `args.cancel = true` to intercept and dismiss the popup (e.g. capture OAuth redirect). `args.url` contains the target URL. |
+| `popupNavigate` | Android: fired for the first URL of a new window, before the popup is shown, and on each navigation inside it; set `args.cancel = true` to intercept: the popup is dismissed or never shown (e.g. open external links in the browser, capture OAuth redirect). `args.url` contains the target URL. |
 
 
 ## API Reference

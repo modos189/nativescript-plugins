@@ -30,7 +30,7 @@ const IMPLEMENTED = {
     { name: 'loadFinished', desc: 'Navigation finished. `args.error` is set on failure' },
     { name: 'loadProgress', desc: 'Android: page load progress. `args.progress` is 0–100' },
     { name: 'titleChanged', desc: 'Page title changed. `args.title` contains the new title' },
-    { name: 'popupNavigate', desc: 'Android: fired on each navigation inside a popup; set `args.cancel = true` to intercept and dismiss the popup (e.g. capture OAuth redirect). `args.url` contains the target URL.' },
+    { name: 'popupNavigate', desc: 'Android: fired for the first URL of a new window, before the popup is shown, and on each navigation inside it; set `args.cancel = true` to intercept: the popup is dismissed or never shown (e.g. open external links in the browser, capture OAuth redirect). `args.url` contains the target URL.' },
   ],
 };
 
