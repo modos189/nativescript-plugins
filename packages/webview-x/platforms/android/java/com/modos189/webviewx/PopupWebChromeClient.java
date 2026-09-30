@@ -11,6 +11,8 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -48,7 +50,10 @@ public class PopupWebChromeClient extends WebChromeClient {
 
     /** Callback so the host app can intercept popup navigations (e.g. OAuth redirects). */
     public interface PopupUrlInterceptor {
-        /** Return true to intercept: the popup is dismissed and the URL is passed to the host. */
+        /**
+         * Return true to intercept: the popup is dismissed (or never shown)
+         * and the URL is passed to the host.
+         */
         boolean shouldHandleExternally(String url);
     }
 
@@ -142,15 +147,61 @@ public class PopupWebChromeClient extends WebChromeClient {
         settings.setSupportMultipleWindows(true);
         settings.setUserAgentString(view.getSettings().getUserAgentString());
 
-        // Wire the new WebView into the system's popup transport before showing UI.
+        // The target URL is unknown until the first navigation, so the sheet is shown only once
+        // the host keeps that URL in the popup; otherwise the window is dropped unseen.
+        popupWebView.setWebViewClient(new WebViewClient() {
+            private boolean decided;
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (decided || isBlankUrl(url)) return false;
+                decided = true;
+                if (urlInterceptor != null && urlInterceptor.shouldHandleExternally(url)) {
+                    destroyLater(view);
+                    return true;
+                }
+                showPendingPopup(activity, view);
+                return false;
+            }
+
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                // POST form targets never reach shouldOverrideUrlLoading
+                if (decided || isBlankUrl(url)) return;
+                decided = true;
+                showPendingPopup(activity, view);
+            }
+        });
+        popupWebView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onCloseWindow(WebView window) {
+                destroyLater(window);
+            }
+        });
+
+        // Wire the new WebView into the system's popup transport
         WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
         transport.setWebView(popupWebView);
         resultMsg.sendToTarget();
 
+        return true;
+    }
+
+    private static boolean isBlankUrl(String url) {
+        return url == null || url.isEmpty() || url.equals("about:blank");
+    }
+
+    private void showPendingPopup(Activity activity, WebView popupWebView) {
         Dialog dialog = showPopupDialog(activity, popupWebView);
         popupDialogs.put(popupWebView, dialog);
+    }
 
-        return true;
+    private static void destroyLater(final WebView popupWebView) {
+        // Posted: may run inside the WebView's own callback; View.post() would wait
+        // for an attach that never comes
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override public void run() { popupWebView.destroy(); }
+        });
     }
 
     @Override
